@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+    	<!-- Тайтл страницы, который видно в панели задач браузера-->
+        <title> Змейка </title>
+        <!-- Кодировка страницы (передается браузеру) -->
+        <meta charset="UTF-8">
+        <!-- Стили для элементов на странице -->
+        <style>
+        	/* 100 процентное заполнение экрана без внешних границ*/
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            /* Белый цвет текста, черный фон и центральное расположения элементов на странице */
+            body {
+            	color: #fff;
+                background: #000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            /* Отключение маркеров у маркерованного списка*/
+            li {
+            	list-style-type: none; 
+            }
+            /* расположение текста в строчку*/
+            p {
+            	display: inline;
+            }
+            /* Отступ слева на 145 пикселей у объектов типа DIV */
+            div{
+            	margin-left: 145px;
+            }
+            /* кнопка сброса игры:*/
+            #stop {
+            	background-image: url(img/stop.png) no-repeat;
+            	margin-top: 5px;
+            	padding: 0;
+            }
+            /* кнопка начала игры:*/
+            #play {
+            	background-image: url(img/play.png);
+            	width: 35px;
+            	height: 35px;
+            	border: none;
+            }
+            /* кнопка остановки игры:*/
+            #pause {
+            	background-image: url(img/pause.png);
+            	width: 35px;
+            	height: 35px;
+            	border: none;
+            }
+            /* стили для полей вывода счета и рекорда */
+            input.display {
+                width: 40px;
+                height: 40px;
+                text-align: center;
+                background-color: #000;
+                border: none;
+                color: #fff;
+                font-size: 32px;
+                top: 0;
+
+            }
+            /* Граница холста */
+            canvas {
+                border: 1px solid white;
+            }
+        </style>
+    </head>
+    <body>
+
+<form name="coins">
+	<!-- Использование таблицы для облегчения позиционирования-->
+		<ul>
+			<li>
+				<!-- Тексты, находящиеся над полями вывода счета и рекорда -->
+				<p style="margin-left: 4px;">Счет</p><p style="margin-left: 16px;"></p><p>Рекорд</p>
+				<li>
+					<!-- Поля вывода счета и рекорда -->
+			        <input style="margin-left: 2px;" type="text" size="16" readonly="true" class="display" name="input" >
+			        <p  style="margin-left: 11px;"></p>
+			        <input type="text" size="16" readonly="true" class="display" name="inputmax">
+	    			
+	    		</li>
+    		</li>
+        	<li>
+        		<!-- Объявление холста с заданной шириной и высотой -->
+        		<canvas width="400" height="400" id="game"></canvas>
+    		</li>
+    		<!-- кнопки для паузы, сброса, и начала игры -->
+    		<li id="buts">
+    			<div>
+    				<input id="pause" type="button" 
+	    			onclick="
+	    			if (playcalc !== 0){
+	    				playcalc = 0;
+	    			}
+	    			">
+    				<a href="index1.html" id="stop"><img src="img/stop.png" alt="stop" style="margin-top: 2px;"></a>
+	    			<input id="play" type="button" 
+	    			onclick="
+	    			if (playcalc === 0){
+	    				// если игра не начата, и была нажата кнопка, то начать игру (и прибавить еденицу к индикатору начала игры)
+	    				playcalc += 1;
+	    				requestAnimationFrame(loop)
+	    			}
+	    			">
+    			</div>
+    		</li>
+    	</ul>
+    	<!-- Скрипт игры -->
+        <script>
+        	// Объявление ключевых переменных
+            var canvas = document.getElementById('game');
+            var context = canvas.getContext('2d');
+            var grid = 16;
+            var count = 0;
+            var max = 0;
+            var playcalc = 0;
+            var ind = 1;
+            // создание объекта "змейка"
+            var snake = {
+            	//спавн по координатам
+                x: 160,
+                y: 160,
+
+                // скорость змеи, перемещение каждый раз по х и у
+                dx: grid,
+                dy: 0,
+
+                // массив из клеток, из которых состоит тело смейки
+                cells: [],
+
+                // длина смейки (увеличивается, когда съедаешь яблоко)
+                maxCells: 4
+            };
+            // создание объекта "яблокаъо"
+            var apple = {
+                x: 320,
+                y: 320
+            };
+            // функция, отвечаюшая за получение рандомного числа в данном промежутке
+            function getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min)) + min;
+            }
+            // игровой цикл 
+            function loop() {
+            	// если игра запущена, то включить рекурсию
+            	if (playcalc !== 0) {
+                	requestAnimationFrame(loop);
+                }
+                // показывать 15 фпс вместо 60 (60/15 = 4) (фреймрейт)
+                if (++count < 4) {
+                    return;
+                }
+                // count - счетчик вхождений в цикл
+                count = 0;
+                // очищение холста
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                // движение смеи по скорости dx и dy 
+                snake.x += snake.dx;
+                snake.y += snake.dy;
+                // заполнение счета и рекорда
+                coins.input.value = snake.maxCells-4;
+                coins.inputmax.value = max;
+                if (coins.input.value > max){
+                	//если счет больше рекорда, то к рекорду прибавляется единица
+                    max += 1;
+                    coins.inputmax.value = max
+                }
+                // перемещение змейки через границу ( по горизонтали)
+                // если X или Y координата змейки равна нулю, то она перемещается на противоположную сторону с сохранением направления  
+
+                if (snake.x < 0) {
+                    snake.x = canvas.width - grid;
+                } else if (snake.x >= canvas.width) {
+                    snake.x = 0;
+                }
+
+                // перемещение змейки через границу ( по вертикали) 
+
+                if (snake.y < 0) {
+                    snake.y = canvas.height - grid;
+                } else if (snake.y >= canvas.height) {
+                    snake.y = 0;
+                }
+                // отслеживание, где змея была (первый элемент массива - голова) 
+                snake.cells.unshift({
+                    x: snake.x,
+                    y: snake.y
+                });
+                // удаление клетки сзади и создание спереди
+                if (snake.cells.length > snake.maxCells) {
+                    snake.cells.pop();
+                }
+                // цвет яблока
+                context.fillStyle = 'green';
+                // вывод яблока на холст
+                context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+                // цвет змейки
+                context.fillStyle = 'blue';
+                // вывод змейки на холст
+                snake.cells.forEach(function(cell, index) {
+
+                    // вывод на 1 пиксель меньше, чем размер сетки
+                    context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+                    // змея ест яблоко
+                    if (cell.x === apple.x && cell.y === apple.y) {
+                    	// если какая-либо клетка змеи попала на яблоко, то максимальное количество клеток увеличивается на еденицу
+                        snake.maxCells++;
+                        // прибавление еденицы к счету
+                        coins.input.value = snake.maxCells-4;
+                        // генеация случайных координат для яблока 
+                        apple.x = getRandomInt(0, 25) * grid;
+                        apple.y = getRandomInt(0, 25) * grid;
+                    }
+                    // коллизия змейки
+                    for (var i = index + 1; i < snake.cells.length; i++) {
+
+                        // перезапуск игры в случае, если змейка попала на часть своего тела 
+                        if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                            snake.x = 160;
+                            snake.y = 160;
+                            coins.input.value = 0;
+                            snake.cells = [];
+                            snake.maxCells = 4;
+                            snake.dx = grid;
+                            snake.dy = 0;
+                            apple.x = getRandomInt(0, 25) * grid;
+                            apple.y = getRandomInt(0, 25) * grid;
+                        }
+                    }
+                });
+            }
+            // события для изминения направления змейки
+            document.addEventListener('keydown', 
+            	function(e) {
+            		//если игра начата, то считывать нажатия на кнопки
+            	if (playcalc !== 0) {
+	                // влево 
+	                if (e.which === 37 && snake.dx === 0) {
+	                    snake.dx = -grid;
+	                    snake.dy = 0;
+	                }// вверх 
+	                else if (e.which === 38 && snake.dy === 0) {
+	                    snake.dy = -grid;
+	                    snake.dx = 0;
+	                }// вправо 
+	                else if (e.which === 39 && snake.dx === 0) {                    snake.dx = grid;
+	                    snake.dy = 0;
+	                }// вниз
+	                else if (e.which === 40 && snake.dy === 0) {
+	                    snake.dy = grid;
+	                    snake.dx = 0;
+	                }
+               }
+            });
+
+        </script></form>
+    </body>
+</html>
